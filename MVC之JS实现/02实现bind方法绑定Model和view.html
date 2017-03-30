@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>实现bind方法，绑定model和view</title>
+	<style>
+		div{
+			width:200px;
+			height:50px;
+			border:1px solid blue;
+		}
+	</style>
+</head>
+<body>
+	
+	<div id="div1"></div>
+	<div id="div2"></div>
+
+	<script>
+		function Model(value){
+			this._value=value;
+			this._listener=[];
+		}
+		Model.prototype.set=function(value){
+			var self=this;
+			self._value=value;
+			setTimeout(function(){
+				self._listener.forEach(function(listener){
+					listener.call(self,value);
+				});
+			});
+		};
+
+		Model.prototype.watch=function(listener){
+			this._listener.push(listener);
+		}
+
+
+		Model.prototype.bind=function(node){
+			// 将watch的逻辑和通用的回调函数放到这里
+			this.watch(function(value){
+				node.innerHTML=value;
+			});
+		};
+
+
+
+		(function(){
+			var model=new Model();
+			model.bind(document.getElementById("div1"));
+			model.bind(document.getElementById("div2"));
+			model.set("this is a div");
+
+			/*
+			_listener:[function(value){div.innerHTML=value}]
+			function(value){div.innerHTML=value}.call(self,value)
+			*/
+
+		})();
+
+
+
+
+
+	</script>
+</body>
+</html>

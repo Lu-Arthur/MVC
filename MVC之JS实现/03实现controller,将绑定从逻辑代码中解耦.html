@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>03实现controller,将绑定从逻辑代码中解耦</title>
+	<style>
+		div{
+			width:200px;
+			height:50px;
+			border:1px solid green;
+		}
+	</style>
+</head>
+<body>
+	
+	<div id="div1" bind="model1"></div>
+	<div id="div2" bind="model2"></div>
+
+	<script>
+		function Model(value){
+			this._value=value;
+			this._listener=[];
+		}
+		Model.prototype.set=function(value){
+			var self=this;
+			self._value=value;
+			setTimeout(function(){
+				self._listener.forEach(function(listener){
+					listener.call(self,value);
+				});
+			});
+		};
+
+		Model.prototype.watch=function(listener){
+			this._listener.push(listener);
+		}
+
+
+		Model.prototype.bind=function(node){
+			// 将watch的逻辑和通用的回调函数放到这里
+			this.watch(function(value){
+				node.innerHTML=value;
+			});
+		};
+
+		function Controller(callback){
+			var models={};
+
+			//找到所有有bind属性的元素
+			var views=document.querySelectorAll("[bind]");
+			// console.log(views);
+			//将views处理为普通函数
+			views=Array.prototype.slice.call(views,0);//[div1,div2]
+			// console.log(views)
+			views.forEach(function(view){//div1
+				var modelName=view.getAttribute("bind");//model1
+
+				//取出或新建起绑定的model
+				models[modelName]=models[modelName]||new Model();
+
+				/*
+				models:{
+					model1:{new Model()},
+					nodel2:{new Model()}
+				}
+				*/
+
+				//完成该元素和指定model的绑定
+				models[modelName].bind(view);
+				/*
+				new Model.bind(div1)
+				listener:function(value){div1.innerHTML=value;}
+				_listener:[function(value){div1.innerHTML=value;},function(value){div2.innerHTML=value;}]
+				*/
+
+			});
+			// console.log(models)
+
+			//调用controller的具体逻辑，将models传入，方便业务处理
+			callback.call(this,models);
+			// new Model.set("this is a div")
+			// console.log(models)
+		}
+
+
+		//业务代码
+		new Controller(function(models){
+			var model1=models.model1;
+			var model2=models.model2;
+			model1.set("this is a div");
+			model2.set("this is a test div");
+		});
+
+
+		// callback:function(models){
+		// 	var model1=models.model1;
+		// 	model1.set("this is a div");
+		// }
+		// new Model.set("this is a div")
+
+
+	</script>
+</body>
+</html>
